@@ -3,11 +3,11 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { TrendingUp, TrendingDown, Plus, Eye, Newspaper, BarChart2, Briefcase, X } from 'lucide-react'
-import { STOCKS, PORTFOLIO, INDICES, NEWS } from './mockdata'
+import { TrendingUp, TrendingDown, Plus, Eye, Newspaper, BarChart2, Briefcase, X, Menu } from 'lucide-react'
+import { STOCKS, PORTFOLIO, INDICES, NEWS } from './mockData'
 import './App.css'
 
-// ─── CHART TOOLTIP ─
+// ─── CHART TOOLTIP ────────────────────────────────────────────────────────────
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   const color = payload[0].stroke
@@ -19,7 +19,7 @@ const ChartTooltip = ({ active, payload, label }) => {
   )
 }
 
-// ─── LIVE CLOCK 
+// ─── LIVE CLOCK ───────────────────────────────────────────────────────────────
 const Clock = () => {
   const [time, setTime] = useState(new Date())
   useEffect(() => {
@@ -33,11 +33,15 @@ const Clock = () => {
   )
 }
 
-// ─── TOPBAR 
-const Topbar = () => {
+// ─── TOPBAR ───────────────────────────────────────────────────────────────────
+const Topbar = ({ onMenuClick }) => {
   const items = [...Object.values(STOCKS), ...Object.values(STOCKS)]
   return (
     <div className="topbar">
+      <button className="mobile-menu-btn" onClick={onMenuClick}>
+        <Menu size={18} />
+      </button>
+
       <div className="topbar-logo">
         <span className="topbar-dot" />
         STOCKPULSE
@@ -62,7 +66,7 @@ const Topbar = () => {
   )
 }
 
-// ─── SIDEBAR 
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 const Sidebar = ({ selected, onSelect, watchlist, onAdd, onRemove }) => {
   const [showAdd, setShowAdd] = useState(false)
   const notWatched = Object.keys(STOCKS).filter(s => !watchlist.includes(s))
@@ -140,7 +144,102 @@ const Sidebar = ({ selected, onSelect, watchlist, onAdd, onRemove }) => {
   )
 }
 
-// ─── PRICE CHART 
+// ─── MOBILE SIDEBAR ───────────────────────────────────────────────────────────
+const MobileSidebar = ({ isOpen, onClose, selected, onSelect, watchlist, onAdd, onRemove }) => {
+  const [showAdd, setShowAdd] = useState(false)
+  const notWatched = Object.keys(STOCKS).filter(s => !watchlist.includes(s))
+
+  const handleSelect = (sym) => {
+    onSelect(sym)
+    onClose()
+  }
+
+  return (
+    <>
+      {/* Overlay */}
+      <div className={`mobile-sidebar-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
+
+      {/* Sidebar */}
+      <div className={`mobile-sidebar ${isOpen ? 'open' : ''}`}>
+        <div className="mobile-sidebar-header">
+          <span className="mobile-sidebar-title">STOCKPULSE</span>
+          <button className="mobile-sidebar-close" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Market Indices */}
+        <div className="sidebar-section">
+          <div className="section-label">Market Indices</div>
+          {INDICES.map(idx => (
+            <div className="index-row" key={idx.name}>
+              <span className="index-name">{idx.name}</span>
+              <div className="index-right">
+                <div className="index-value">{idx.value}</div>
+                <div className={`index-change ${idx.up ? 'up' : 'dn'}`}>{idx.change}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Watchlist */}
+        <div className="watchlist-body">
+          <div className="section-label watchlist-label">
+            <Eye size={9} /> Watchlist
+          </div>
+
+          <div className="watchlist-scroll">
+            {watchlist.map(sym => {
+              const s = STOCKS[sym]
+              return (
+                <div
+                  key={sym}
+                  className={`watchlist-item ${selected === sym ? 'active' : ''}`}
+                  onClick={() => handleSelect(sym)}
+                >
+                  <button className="wl-remove" onClick={e => { e.stopPropagation(); onRemove(sym) }}>
+                    <X size={9} />
+                  </button>
+                  <div>
+                    <div className="wl-symbol">{sym}</div>
+                    <div className="wl-name">{s.name.split(' ')[0]}</div>
+                  </div>
+                  <div>
+                    <div className="wl-price">${s.price.toFixed(2)}</div>
+                    <div className={`wl-pct ${s.changePct >= 0 ? 'up' : 'dn'}`}>
+                      {s.changePct >= 0 ? '+' : ''}{s.changePct.toFixed(2)}%
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Add stock dropdown */}
+          {showAdd && notWatched.length > 0 && (
+            <div className="add-stock-list">
+              {notWatched.map(sym => (
+                <div key={sym} className="add-stock-option" onClick={() => { onAdd(sym); setShowAdd(false) }}>
+                  <span className="add-stock-sym">{sym}</span>
+                  <span className="add-stock-plus">+ Add</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="add-stock-wrap">
+            <button className="add-stock-btn" onClick={() => setShowAdd(v => !v)}>
+              <Plus size={11} />
+              {showAdd ? 'Cancel' : 'Add Stock'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── PRICE CHART ─────────────────────────────────────────────────────────────
 const PriceChart = ({ stock }) => {
   const [range, setRange] = useState('1M')
   const ranges = { '1W': 7, '2W': 14, '1M': 30 }
@@ -312,6 +411,7 @@ const NewsPanel = () => (
 export default function App() {
   const [selected, setSelected]   = useState('AAPL')
   const [watchlist, setWatchlist] = useState(['AAPL', 'NVDA', 'TSLA', 'MSFT', 'GOOGL', 'AMZN', 'JPM'])
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const stock = STOCKS[selected]
   const isUp  = stock.changePct >= 0
@@ -324,7 +424,17 @@ export default function App() {
 
   return (
     <div className="app">
-      <Topbar />
+      <Topbar onMenuClick={() => setMobileMenuOpen(true)} />
+
+      <MobileSidebar
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        selected={selected}
+        onSelect={setSelected}
+        watchlist={watchlist}
+        onAdd={handleAdd}
+        onRemove={handleRemove}
+      />
 
       <Sidebar
         selected={selected}
@@ -349,7 +459,7 @@ export default function App() {
               <div><div className="meta-label">Volume</div><div className="meta-value">{stock.volume}</div></div>
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
+          <div>
             <div className="stock-price">${stock.price.toFixed(2)}</div>
             <div className={`stock-change-row ${isUp ? 'up' : 'dn'}`}>
               {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
