@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { TrendingUp, TrendingDown, Plus, Eye, Newspaper, BarChart2, Briefcase, X, Menu } from 'lucide-react'
-import { STOCKS, PORTFOLIO, INDICES, NEWS } from './mockData.js'
+import { STOCKS, PORTFOLIO, INDICES, NEWS } from './mockdata.js'
 import './App.css'
 
 // ─── CHART TOOLTIP ────────────────────────────────────────────────────────────
